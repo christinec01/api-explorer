@@ -1,7 +1,10 @@
 import React, { useState } from "react";
+import Loader from "react-loader-spinner";
+import "./ExplorerComponent.css";
 
 export default function Explorer({ title, url, method, body }) {
   const [response, setResponse] = useState("");
+  const [waiting, setWaiting] = useState(false);
 
   return (
     <div className="container">
@@ -12,6 +15,8 @@ export default function Explorer({ title, url, method, body }) {
         body={body}
         method={method}
         onResponse={setResponse}
+        waiting={waiting}
+        onSetWaiting={setWaiting}
       />
       <Response response={response} />
     </div>
@@ -36,7 +41,7 @@ function BaseURL({ url }) {
   );
 }
 
-function BodyForm({ url, body, method, onResponse }) {
+function BodyForm({ url, body, method, onResponse, waiting, onSetWaiting }) {
   const [inputFields, setInputFields] = useState({
     email: "",
     "full-name": "",
@@ -46,8 +51,14 @@ function BodyForm({ url, body, method, onResponse }) {
     <div>
       <form
         onSubmit={(e) => {
+          onResponse("");
           e.preventDefault();
-          fetchApiExplorer({ url, method, data: inputFields }).then(onResponse);
+          fetchApiExplorer({
+            url,
+            method,
+            onSetWaiting,
+            data: inputFields,
+          }).then(onResponse);
         }}
       >
         <legend>
@@ -62,19 +73,35 @@ function BodyForm({ url, body, method, onResponse }) {
             setInputFields={setInputFields}
           />
         ))}
-        <button> Send requests</button>
+        <RequestButton waiting={waiting} />
       </form>
     </div>
   );
 }
 
-function Response({ response }) {
+function RequestButton({ waiting }) {
+  return (
+    <button>
+      {" "}
+      Send requests {<br />}{" "}
+      <Loader
+        type="TailSpin"
+        height={20}
+        width={20}
+        color="black"
+        visible={waiting}
+      />{" "}
+    </button>
+  );
+}
+
+function Response({ response, error }) {
   return (
     <div className="response-section">
       <p className="section-header">Response</p>
 
       {response ? (
-        <div className="response">{JSON.stringify(response)}</div>
+        <div className="response-success">{JSON.stringify(response)}</div>
       ) : null}
     </div>
   );
@@ -107,18 +134,27 @@ function FormField({ element, id, inputFields, setInputFields }) {
   );
 }
 
-function fetchApiExplorer({ url, method, data }) {
+function fetchApiExplorer({ url, method, data, onSetWaiting }) {
+  onSetWaiting(true);
+  const methodFormatted = method.toUpperCase();
   return fetch(url, {
-    method: method.toUpperCase(),
-    body: JSON.stringify({ data }),
-  }).then((response) => {
-    if (response.ok) {
-      console.debug(response.json, "json.results");
+    method: methodFormatted,
+    headers: { "Content-Type": "application/json" },
+    body:
+      methodFormatted !== "GET" || "PUT" ? JSON.stringify({ data }) : undefined,
+  })
+    .then((response) => {
+      onSetWaiting(false);
+      if (!response.ok) {
+        console.log("Network response was not okay");
+        throw Error(response.statusText);
+      }
       return response.json();
-    } else {
-      throw Error(response.statusText);
-    }
-  });
+    })
+    .catch((error) => {
+      onSetWaiting(false);
+      console.error("There was an issue:", error);
+    });
 }
 
 function capitalizeFirstLetter(string) {

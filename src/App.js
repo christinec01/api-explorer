@@ -1,7 +1,6 @@
 import React from "react";
 import ExplorerComponent from "./ExplorerComponent";
 import * as data from "./data.json";
-import "./App.css";
 
 function App() {
   return (
