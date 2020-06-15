@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Loader from "react-loader-spinner";
 import "./ExplorerComponent.css";
 
-export default function Explorer({ title, url, method, body }) {
+export default function ExplorerComponent({ title, url, method, body }) {
   const [response, setResponse] = useState("");
   const [waiting, setWaiting] = useState(false);
 
@@ -83,14 +83,17 @@ function RequestButton({ waiting }) {
   return (
     <button>
       {" "}
-      Send requests {<br />}{" "}
-      <Loader
-        type="TailSpin"
-        height={20}
-        width={20}
-        color="black"
-        visible={waiting}
-      />{" "}
+      {!waiting ? (
+        "Send requests"
+      ) : (
+        <Loader
+          type="TailSpin"
+          height={20}
+          width={20}
+          color="black"
+          visible={waiting}
+        />
+      )}
     </button>
   );
 }
